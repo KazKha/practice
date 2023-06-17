@@ -24,7 +24,6 @@ class RecordLister
 
     public function index() {
         $data = $this->getrecords();
-       
         return $this->listReords($data);
     }
 
@@ -39,13 +38,12 @@ class RecordLister
     private function listReords($items) {
         $html = '<ul>';
         foreach ($items as $item) {
-            $html .= '<li>' . $item['name'];
+            $html .= '<li id ="mem_'.$item['id'].'" >' . $item['name'];
             $chilDtaa = $this->getrecords($item['id']);
 
             if (!empty($chilDtaa)) {
                 $html .= $this->listReords($chilDtaa);
             }
-
             $html .= '</li>';
         }
 
@@ -53,7 +51,47 @@ class RecordLister
 
         return   $html;
     }
+    public function listOfParents(){
+        $query = "SELECT  id, name  FROM membertable";
+        $statement = $this->conn->prepare($query);
+        $statement->execute();
+        return $statement->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function addMender($param) {
+        return $this->insertdMember( $param );
+
+    }
+
+    private function insertdMember($param)  {
+
+        $parent = $param['parent'];
+        $name   = $param['mem_name'];
+    
+        $query = $this->conn->prepare("INSERT INTO membertable (parentid, name) VALUES (:parent, :name)");
+        $query->bindValue(':parent', $parent);
+        $query->bindValue(':name', $name);
+        if ($query->execute() ){
+            $insertid = $this->conn->lastInsertId();
+            $html = '<li id ="mem_'.$insertid.'" >' . $name.'</li>';
+            return  $html;
+       
+        }
+        
+    }
+
+
 }
+
+$recordLister = new RecordLister();
+
+if( $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])  &&  $_POST['action'] === 'add_men' ){
+    echo $recordLister->addMender($_POST);
+}
+
+
+
+
 
 
 
